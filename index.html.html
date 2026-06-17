@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DU FIN Alumni Directory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --bg:#F4F5F7;
+    --panel:#FFFFFF;
+    --border:#E1E5EA;
+    --gray-900:#1F2733;
+    --gray-700:#52606D;
+    --gray-400:#9AA5B1;
+    --blue-100:#E3EEF8;
+    --blue-300:#A9CBE8;
+    --blue-500:#4F86B8;
+    --blue-700:#33658F;
+    --radius-lg:18px;
+    --radius-md:12px;
+    --shadow-soft:0 14px 30px -16px rgba(31,39,51,0.18);
+    --font-display:'Sora',sans-serif;
+    --font-body:'Inter',-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--gray-900); font-family:var(--font-body); }
+  button{ font-family:var(--font-body); }
+
+  /* ---------------- Hero ---------------- */
+  .hero{ position:relative; overflow:hidden; padding:3.5rem 1.5rem 2.5rem; text-align:center; }
+  .hero__blob{ position:absolute; border-radius:50%; filter:blur(60px); opacity:0.6; pointer-events:none; z-index:0; }
+  .b1{ width:420px;height:420px; top:-160px; left:-120px; background:radial-gradient(circle, var(--blue-300), transparent 70%); }
+  .b2{ width:380px;height:380px; top:-100px; right:-140px; background:radial-gradient(circle, var(--blue-100), transparent 70%); }
+  .b3{ width:300px;height:300px; bottom:-180px; left:38%; background:radial-gradient(circle, #D6DCE2, transparent 70%); }
+  @media (prefers-reduced-motion: no-preference){
+    .b1{ animation:drift1 18s ease-in-out infinite; }
+    .b2{ animation:drift2 22s ease-in-out infinite; }
+    .b3{ animation:drift3 26s ease-in-out infinite; }
+  }
+  @keyframes drift1{ 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(50px,30px) scale(1.12);} }
+  @keyframes drift2{ 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-40px,40px) scale(1.08);} }
+  @keyframes drift3{ 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(30px,-20px) scale(1.15);} }
+
+  .hero__inner{ position:relative; z-index:2; max-width:780px; margin:0 auto; }
+  .hero__eyebrow{ font-family:var(--font-mono); font-size:0.76rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--blue-700); margin:0 0 0.6rem; }
+  .hero__title{
+    font-family:var(--font-display); font-weight:800; font-size:clamp(1.9rem, 6vw, 3.2rem);
+    letter-spacing:-0.02em; margin:0 0 0.5rem; color:var(--gray-900);
+    background:linear-gradient(90deg, var(--gray-900), var(--blue-700));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .hero__sub{ color:var(--gray-700); font-size:0.98rem; margin:0 0 2rem; }
+  .hero__stat{ font-family:var(--font-mono); color:var(--blue-700); font-weight:600; }
+
+  /* ---------------- Search card (minimal) ---------------- */
+  .search-card{
+    position:relative; z-index:2; max-width:700px; margin:0 auto;
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:var(--radius-lg); box-shadow:var(--shadow-soft);
+    padding:1.5rem; text-align:left;
+  }
+  .search-card__row{ display:flex; gap:0.75rem; margin-bottom:0.9rem; }
+  @media (max-width:640px){ .search-card__row{ flex-direction:column; gap:0.9rem; } }
+  .search-card__field{ flex:1 1 0; min-width:0; }
+  .search-card__label{ font-size:0.74rem; font-weight:600; color:var(--gray-700); margin:0 0 0.35rem 0.1rem; display:block; }
+  .search-card input{
+    width:100%; padding:0.65rem 0.85rem; border:1px solid var(--border);
+    border-radius:var(--radius-md); font-size:0.92rem; font-family:var(--font-body);
+    background:#FBFCFD; color:var(--gray-900);
+  }
+  .search-card input::placeholder{ color:var(--gray-400); }
+  .search-card input:focus{ outline:none; border-color:var(--blue-500); box-shadow:0 0 0 3px rgba(79,134,184,0.16); }
+  #searchBtn{
+    width:100%; padding:0.8rem; border:none; border-radius:var(--radius-md);
+    background:var(--blue-500); color:#fff; font-family:var(--font-display);
+    font-weight:700; font-size:1rem; cursor:pointer; transition:background 0.15s ease;
+  }
+  #searchBtn:hover{ background:var(--blue-700); }
+  #searchBtn:disabled{ opacity:0.7; cursor:default; }
+
+  .add-alumni-link{
+    display:block; width:max-content; margin:1.3rem auto 0;
+    background:var(--blue-100); color:var(--blue-700); border:none;
+    border-radius:999px; padding:0.55rem 1.25rem; font-weight:600; font-size:0.88rem;
+    cursor:pointer; transition:background 0.15s ease, color 0.15s ease;
+  }
+  .add-alumni-link:hover{ background:var(--blue-500); color:#fff; }
+
+  /* ---------------- Results ---------------- */
+  .results{ max-width:1080px; margin:2.75rem auto 4rem; padding:0 1.5rem; position:relative; z-index:1; }
+  .results__label{ font-family:var(--font-mono); font-size:0.76rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray-700); margin:0 0 1.1rem; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(258px, 1fr)); gap:1.5rem; }
+  .alum-card{
+    position:relative; background:var(--panel); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:1.4rem 1.25rem 1.1rem;
+    box-shadow:0 10px 22px -16px rgba(31,39,51,0.22);
+    display:flex; flex-direction:column;
+  }
+  @media (prefers-reduced-motion: no-preference){ .alum-card{ animation:popIn 0.45s cubic-bezier(.34,1.56,.64,1) backwards; } }
+  @keyframes popIn{
+    0%{ opacity:0; transform:scale(0.82) translateY(8px); }
+    65%{ opacity:1; transform:scale(1.035); }
+    100%{ opacity:1; transform:scale(1) translateY(0); }
+  }
+  .alum-card__tag{
+    position:absolute; top:1rem; right:1rem; background:var(--blue-100); color:var(--blue-700);
+    font-family:var(--font-mono); font-size:0.7rem; font-weight:600; padding:0.22rem 0.55rem; border-radius:999px;
+  }
+  .alum-card__top{ display:flex; gap:0.8rem; align-items:flex-start; margin-bottom:0.7rem; padding-right:3.2rem; }
+  .alum-card__avatar{
+    flex:0 0 auto; width:40px; height:40px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:700; font-size:0.92rem; color:#fff;
+  }
+  .alum-card__name{ font-family:var(--font-display); font-weight:700; font-size:1.02rem; margin:0.05rem 0 0; line-height:1.25; }
+  .alum-card__role{ font-size:0.87rem; color:var(--blue-700); font-weight:500; margin:0 0 0.9rem; }
+  .alum-card__contacts{ display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:auto; padding-top:0.85rem; border-top:1px dashed var(--border); }
+  .alum-card__contact{
+    display:inline-flex; align-items:center; gap:0.3rem; font-size:0.78rem; font-weight:600;
+    color:var(--blue-700); border:1px solid var(--border); border-radius:999px;
+    padding:0.32rem 0.75rem; text-decoration:none; transition:background 0.15s ease, color 0.15s ease;
+  }
+  .alum-card__contact:hover{ background:var(--blue-500); color:#fff; border-color:var(--blue-500); }
+  .alum-card__nocontact{ font-size:0.76rem; color:var(--gray-400); font-style:italic; margin-top:auto; padding-top:0.85rem; border-top:1px dashed var(--border); }
+
+  .empty{ text-align:center; padding:2.75rem 1rem; border:1px dashed var(--border); border-radius:var(--radius-md); color:var(--gray-700); font-size:0.95rem; }
+  .hidden{ display:none !important; }
+
+  /* ---------------- Modal ---------------- */
+  .modal-overlay{ position:fixed; inset:0; background:rgba(31,39,51,0.45); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:50; padding:1.5rem; }
+  .modal{ background:#fff; border-radius:var(--radius-lg); max-width:520px; width:100%; max-height:88vh; overflow:auto; position:relative; box-shadow:0 30px 60px -20px rgba(31,39,51,0.35); padding:1.6rem; }
+  .modal__close{ position:absolute; top:0.9rem; right:0.9rem; width:32px; height:32px; border-radius:50%; border:none; background:var(--blue-100); color:var(--blue-700); font-size:1.1rem; cursor:pointer; line-height:1; }
+  .modal__title{ font-family:var(--font-display); font-weight:700; font-size:1.15rem; margin:0 0 1.1rem; }
+  .add-form label{ display:block; font-size:0.82rem; font-weight:600; color:var(--gray-700); margin:0 0 1rem; }
+  .add-form label span{ display:block; margin-bottom:0.32rem; }
+  .add-form input{ width:100%; padding:0.65rem 0.85rem; border:1px solid var(--border); border-radius:var(--radius-md); font-size:0.92rem; font-family:var(--font-body); color:var(--gray-900); }
+  .add-form input:focus{ outline:none; border-color:var(--blue-500); box-shadow:0 0 0 3px rgba(79,134,184,0.16); }
+  .add-form button{ width:100%; padding:0.8rem; border:none; border-radius:var(--radius-md); background:var(--blue-500); color:#fff; font-family:var(--font-display); font-weight:700; font-size:0.98rem; cursor:pointer; transition:background 0.15s ease; }
+  .add-form button:hover{ background:var(--blue-700); }
+  .add-form button:disabled{ opacity:0.7; cursor:default; }
+  #addFormStatus{ font-size:0.88rem; margin:0.85rem 0 0; min-height:1.2em; }
+  #addFormStatus.success{ color:#2F7D4F; }
+  #addFormStatus.error{ color:#C24444; }
+
+  footer{ text-align:center; font-family:var(--font-mono); font-size:0.74rem; color:var(--gray-700); padding:1.5rem 1rem 3rem; }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero__blob b1"></div>
+  <div class="hero__blob b2"></div>
+  <div class="hero__blob b3"></div>
+  <div class="hero__inner">
+    <p class="hero__eyebrow" id="eyebrowText">Dhaka University · Department of Finance</p>
+    <h1 class="hero__title">DU FIN ALUMNI DIRECTORY</h1>
+    <p class="hero__sub"><span class="hero__stat" id="statCount">…</span> alumni and counting</p>
+
+    <div class="search-card">
+      <div class="search-card__row">
+        <div class="search-card__field">
+          <span class="search-card__label">Search by name</span>
+          <input type="text" id="nameInput" placeholder="e.g. Tahmid Rahman">
+        </div>
+        <div class="search-card__field">
+          <span class="search-card__label">Batch</span>
+          <input type="text" id="batchInput" placeholder="e.g. 19">
+        </div>
+        <div class="search-card__field">
+          <span class="search-card__label">Company / role</span>
+          <input type="text" id="roleInput" placeholder="e.g. analyst">
+        </div>
+      </div>
+      <button id="searchBtn">Search</button>
+    </div>
+    <button class="add-alumni-link" id="addAlumniBtn">+ Add yourself</button>
+  </div>
+</section>
+
+<div class="results">
+  <p class="results__label" id="resultsLabel">Newest additions</p>
+  <div id="grid" class="grid"></div>
+  <div id="emptyState" class="empty hidden">No matches — try clearing a field or checking the spelling.</div>
+</div>
+
+<footer>Built for DU FIN · data synced live from Google Sheets</footer>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <button class="modal__close" id="modalClose" type="button">&times;</button>
+    <p class="modal__title">Add yourself to the directory</p>
+    <form id="addForm" class="add-form">
+      <label><span>Name</span><input type="text" name="name" required></label>
+      <label><span>Batch</span><input type="text" name="batch"></label>
+      <label><span>Current organization</span><input type="text" name="organization"></label>
+      <label><span>Role</span><input type="text" name="role"></label>
+      <label><span>LinkedIn URL</span><input type="url" name="linkedin" placeholder="https://linkedin.com/in/..."></label>
+      <label><span>Email</span><input type="email" name="email" required></label>
+      <input type="hidden" name="_subject" value="New DU FIN alumni directory submission">
+      <button type="submit">Submit</button>
+    </form>
+    <p id="addFormStatus"></p>
+  </div>
+</div>
+
+<script>
+  // ---------------------------------------------------------------
+  // CONFIG
+  // ---------------------------------------------------------------
+  const CONFIG = {
+    universityName: "Dhaka University",
+    departmentName: "Department of Finance",
+    sheetCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbLj-CaWH3BmjSRwtiss1q6TAkOPWVOPEGU-OeYT9BkL0KpwUNF-04h5OCwln0a25D-wvWhvcz1BgU/pub?output=csv",
+    formspreeUrl: "https://formspree.io/f/xeewdyyy"
+  };
+  document.getElementById('eyebrowText').textContent = CONFIG.universityName + ' · ' + CONFIG.departmentName;
+
+  const DEMO_ALUMNI = [
+    { name:"Maria Chen", batch:"24", role:"Software Engineer", employer:"Northwind Labs", email:"maria.chen@example.com", linkedin:"https://linkedin.com" },
+    { name:"James Okafor", batch:"19", role:"Product Manager", employer:"Bluepeak", email:"james.okafor@example.com", linkedin:"" },
+    { name:"Aisha Rahman", batch:"11", role:"Engineering Director", employer:"Solstice Health", email:"aisha.rahman@example.com", linkedin:"https://linkedin.com" },
+    { name:"Tomás Vidal", batch:"16", role:"Policy Analyst", employer:"Granger Institute", email:"", linkedin:"https://linkedin.com" },
+    { name:"Priya Nandakumar", batch:"21", role:"Data Scientist", employer:"Orchard Analytics", email:"priya.n@example.com", linkedin:"https://linkedin.com" },
+    { name:"Daniel Kim", batch:"08", role:"VP Engineering", employer:"Fernhall", email:"daniel.kim@example.com", linkedin:"" }
+  ];
+
+  const HEADER_MAP = {
+    name:     ["full name","name"],
+    batch:    ["bba batch","batch","graduation year","grad year","year"],
+    role:     ["designation","job title","role","position"],
+    employer: ["present organization","current employer","employer","company","organization"],
+    email:    ["email address","email"],
+    linkedin: ["linkedin profile url","linkedin url","linkedin","linkedin profile"]
+  };
+
+  function normalizeHeader(h){
+    return (h || "").toString().trim().toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+  }
+
+  function mapRow(rawRow){
+    const entries = Object.entries(rawRow).map(([k,v]) => [normalizeHeader(k), v]);
+    function find(keys){
+      for (const nk of keys){
+        const hit = entries.find(([h]) => h === nk);
+        if (hit && hit[1] != null) return hit[1].toString().trim();
+      }
+      return "";
+    }
+    return {
+      name: find(HEADER_MAP.name),
+      batch: find(HEADER_MAP.batch),
+      role: find(HEADER_MAP.role),
+      employer: find(HEADER_MAP.employer),
+      email: find(HEADER_MAP.email),
+      linkedin: find(HEADER_MAP.linkedin)
+    };
+  }
+
+  let allAlumni = [];
+
+  async function fetchAlumni(){
+    const url = CONFIG.sheetCsvUrl;
+    if (!url || url.indexOf("PASTE_YOUR") !== -1) return DEMO_ALUMNI;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("Sheet fetch failed: " + res.status);
+    const text = await res.text();
+    const parsed = Papa.parse(text, { header:true, skipEmptyLines:true });
+    const rows = parsed.data.map(mapRow).filter(r => r.name);
+    if (!rows.length) throw new Error("No usable rows in sheet");
+    return rows;
+  }
+
+  async function refreshData(){
+    try {
+      allAlumni = await fetchAlumni();
+    } catch (err){
+      console.error("Falling back to demo data:", err);
+      if (!allAlumni.length) allAlumni = DEMO_ALUMNI;
+    }
+  }
+
+  function escapeHtml(str){
+    return (str || "").toString()
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  }
+
+  function initials(name){
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0] ? parts[0][0] : "";
+    const last = parts.length > 1 ? parts[parts.length-1][0] : "";
+    return (first + last).toUpperCase();
+  }
+
+  const AVATAR_TONES = ["#33658F","#4F86B8","#52606D","#2B3445"];
+  function avatarTone(name){
+    let sum = 0;
+    for (let i=0;i<name.length;i++) sum += name.charCodeAt(i);
+    return AVATAR_TONES[sum % AVATAR_TONES.length];
+  }
+
+  function cardHtml(p, delay){
+    const batchLabel = p.batch ? escapeHtml(p.batch) : "—";
+    const contacts = [];
+    if (p.email) contacts.push(`<a class="alum-card__contact" href="mailto:${escapeHtml(p.email)}">Email</a>`);
+    if (p.linkedin) contacts.push(`<a class="alum-card__contact" href="${escapeHtml(p.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>`);
+    const contactsHtml = contacts.length
+      ? `<div class="alum-card__contacts">${contacts.join("")}</div>`
+      : `<p class="alum-card__nocontact">No contact info on file</p>`;
+    const roleLine = [p.role, p.employer].filter(Boolean).join(" · ");
+    return `
+      <article class="alum-card" style="animation-delay:${delay}s">
+        <span class="alum-card__tag">${batchLabel}</span>
+        <div class="alum-card__top">
+          <div class="alum-card__avatar" style="background:${avatarTone(p.name)}">${escapeHtml(initials(p.name))}</div>
+          <div><h3 class="alum-card__name">${escapeHtml(p.name)}</h3></div>
+        </div>
+        <p class="alum-card__role">${escapeHtml(roleLine)}</p>
+        ${contactsHtml}
+      </article>
+    `;
+  }
+
+  function renderCards(list, label){
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('emptyState');
+    document.getElementById('resultsLabel').textContent = label;
+    if (!list.length){
+      grid.innerHTML = "";
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    grid.innerHTML = list.map((p,i) => cardHtml(p, Math.min(i,14)*0.03)).join("");
+  }
+
+  function showSpotlight(){
+    const spotlight = allAlumni.slice(-6).reverse();
+    renderCards(spotlight, "Newest additions");
+  }
+
+  function runSearch(list){
+    const nameQ = document.getElementById('nameInput').value.trim().toLowerCase();
+    const batchQ = document.getElementById('batchInput').value.trim().toLowerCase();
+    const roleQ = document.getElementById('roleInput').value.trim().toLowerCase();
+
+    const filtered = list.filter(p => {
+      const nameOk = !nameQ || p.name.toLowerCase().includes(nameQ);
+      const batchOk = !batchQ || (p.batch || "").toLowerCase().includes(batchQ);
+      const haystack = (p.role + " " + p.employer).toLowerCase();
+      const roleOk = !roleQ || haystack.includes(roleQ);
+      return nameOk && batchOk && roleOk;
+    });
+
+    const label = `${filtered.length} match${filtered.length === 1 ? "" : "es"} found`;
+    renderCards(filtered, label);
+  }
+
+  async function handleSearchClick(){
+    const btn = document.getElementById('searchBtn');
+    btn.disabled = true;
+    btn.textContent = "Searching…";
+    await refreshData();
+    runSearch(allAlumni);
+    btn.disabled = false;
+    btn.textContent = "Search";
+  }
+
+  function wireModal(){
+    const overlay = document.getElementById('modalOverlay');
+    document.getElementById('addAlumniBtn').addEventListener('click', () => overlay.classList.remove('hidden'));
+    document.getElementById('modalClose').addEventListener('click', () => overlay.classList.add('hidden'));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add('hidden'); });
+  }
+
+  function wireAddForm(){
+    const form = document.getElementById('addForm');
+    const status = document.getElementById('addFormStatus');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      status.textContent = "";
+      status.className = "";
+      try {
+        const data = new FormData(form);
+        const res = await fetch(CONFIG.formspreeUrl, {
+          method: "POST",
+          body: data,
+          headers: { "Accept": "application/json" }
+        });
+        if (res.ok){
+          status.textContent = "Thanks! We'll review and add you to the directory soon.";
+          status.className = "success";
+          form.reset();
+        } else {
+          status.textContent = "Something went wrong. Please try again, or email the department directly.";
+          status.className = "error";
+        }
+      } catch (err){
+        console.error(err);
+        status.textContent = "Something went wrong. Please try again, or email the department directly.";
+        status.className = "error";
+      }
+      btn.disabled = false;
+    });
+  }
+
+  function wireSearchInputs(){
+    document.getElementById('searchBtn').addEventListener('click', handleSearchClick);
+    ['nameInput','batchInput','roleInput'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSearchClick();
+      });
+    });
+  }
+
+  async function init(){
+    await refreshData();
+    document.getElementById('statCount').textContent = allAlumni.length + "+";
+    showSpotlight();
+    wireSearchInputs();
+    wireModal();
+    wireAddForm();
+  }
+
+  init();
+</script>
+
+</body>
+</html>
