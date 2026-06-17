@@ -122,8 +122,9 @@
   .alum-card__contacts{ display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:auto; padding-top:0.85rem; border-top:1px dashed var(--border); }
   .alum-card__contact{
     display:inline-flex; align-items:center; gap:0.3rem; font-size:0.78rem; font-weight:600;
-    color:var(--blue-700); border:1px solid var(--border); border-radius:999px;
-    padding:0.32rem 0.75rem; text-decoration:none; transition:background 0.15s ease, color 0.15s ease;
+    color:var(--blue-700); border:1px solid var(--border); border-radius:999px; background:none;
+    font-family:inherit; cursor:pointer; padding:0.32rem 0.75rem; text-decoration:none;
+    transition:background 0.15s ease, color 0.15s ease;
   }
   .alum-card__contact:hover{ background:var(--blue-500); color:#fff; border-color:var(--blue-500); }
   .alum-card__nocontact{ font-size:0.76rem; color:var(--gray-400); font-style:italic; margin-top:auto; padding-top:0.85rem; border-top:1px dashed var(--border); }
@@ -290,6 +291,12 @@
       .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
   }
 
+  function revealEmail(btn){
+    btn.textContent = btn.dataset.email;
+    btn.removeAttribute('onclick');
+    btn.style.cursor = 'text';
+  }
+
   function initials(name){
     const parts = name.trim().split(/\s+/);
     const first = parts[0] ? parts[0][0] : "";
@@ -307,7 +314,7 @@
   function cardHtml(p, delay){
     const batchLabel = p.batch ? escapeHtml(p.batch) : "—";
     const contacts = [];
-    if (p.email) contacts.push(`<a class="alum-card__contact" href="mailto:${escapeHtml(p.email)}">Email</a>`);
+    if (p.email) contacts.push(`<button type="button" class="alum-card__contact" data-email="${escapeHtml(p.email)}" onclick="revealEmail(this)">Email</button>`);
     if (p.linkedin) contacts.push(`<a class="alum-card__contact" href="${escapeHtml(p.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>`);
     const contactsHtml = contacts.length
       ? `<div class="alum-card__contacts">${contacts.join("")}</div>`
